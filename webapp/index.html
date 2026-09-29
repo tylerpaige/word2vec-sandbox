@@ -12,6 +12,7 @@
     --result: #0d9f5f;
     --result-text: #4be3a0;
     --danger: #ff6b6b;
+    --relb: #c084fc;
     color-scheme: dark;
   }
 
@@ -92,6 +93,53 @@
     /* border-bottom: 2px solid var(--ink); */
   }
 
+  .card h3 {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+    margin: 0 0 8px;
+    font-weight: 700;
+  }
+
+  /* tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 22px;
+    border-bottom: 2px solid var(--surface);
+  }
+
+  .tab-btn {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-weight: 700;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    background: none;
+    border: none;
+    color: var(--ink-muted);
+    padding: 10px 2px;
+    margin-right: 22px;
+    cursor: pointer;
+    position: relative;
+    bottom: -2px;
+    border-bottom: 2px solid transparent;
+  }
+
+  .tab-btn:hover {
+    color: var(--ink);
+  }
+
+  .tab-btn.is-active {
+    color: var(--ink);
+    border-bottom-color: var(--result-text);
+  }
+
+  .tab-panel[hidden] {
+    display: none;
+  }
+
   /* presets */
   .presets {
     display: flex;
@@ -111,6 +159,7 @@
     border-radius: 0;
     padding: 8px 14px;
     cursor: pointer;
+    text-align: left;
     /* box-shadow: var(--shadow-sm); */
     transition: transform 0.08s, box-shadow 0.08s;
     background: var(--result-text);
@@ -245,7 +294,7 @@
     position: relative;
   }
 
-  #wordInput {
+  input[type="text"] {
     flex: 1 1 180px;
     min-width: 0;
     font-family: "IBM Plex Mono", ui-monospace, monospace;
@@ -259,7 +308,7 @@
     color: var(--ink);
   }
 
-  #wordInput:focus {
+  input[type="text"]:focus {
     outline: none;
     border-bottom-color: var(--result-text);
     /* box-shadow: var(--shadow-sm); */
@@ -353,12 +402,12 @@
   }
 
   /* results */
-  #results-holder {
+  .reveal-holder {
     opacity: 0;
     transition: opacity 0.28s ease;
   }
 
-  #results-holder.is-visible {
+  .reveal-holder.is-visible {
     opacity: 1;
   }
 
@@ -423,6 +472,87 @@
     color: var(--ink-muted);
     font-size: 0.9rem;
     font-family: "IBM Plex Mono", ui-monospace, monospace;
+  }
+
+  /* compare tab */
+  .compare-row {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+
+  @media (min-width: 720px) {
+    .compare-row {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .compare-side .chips {
+    min-height: 120px;
+  }
+
+  .compare-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    padding: 20px 12px;
+    background: var(--surface);
+  }
+
+  .compare-score-value {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--ink);
+  }
+
+  .compare-gauge-wrap {
+    width: 100%;
+    max-width: 420px;
+    height: 22px;
+    background: #111;
+    position: relative;
+  }
+
+  .compare-gauge-fill {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+  }
+
+  .compare-gauge-mid {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--ink);
+  }
+
+  .compare-scale-labels {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    justify-content: space-between;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--ink-muted);
+  }
+
+  .compare-label {
+    font-size: 0.92rem;
+    line-height: 1.5;
+    text-align: center;
+    max-width: 48ch;
+    margin: 4px 0 0;
+  }
+
+  .compare-label strong {
+    color: var(--result-text);
   }
 
   /* viz */
@@ -518,7 +648,7 @@
     .result-bar,
     .btn,
     .preset-btn,
-    #results-holder {
+    .reveal-holder {
 
       animation: none !important;
       transition: none !important;
@@ -541,43 +671,102 @@
     <p class="lede">Word2vec-style embeddings turn words into numbers, which represent coordinates in a high-dimensional space. As a result, you can perform arithmetic operations on them. The effect is like moving objects in space.</p>
     <cite>
       Word vectors: <a href="https://nlp.stanford.edu/projects/glove/" target="_blank" rel="noopener">GloVe</a>
-      (Pennington, Socher &amp; Manning, 2014), Stanford NLP &mdash; using 100,000 of 400,000 words; 100 dimensions 
+      (Pennington, Socher &amp; Manning, 2014), Stanford NLP &mdash; using 100,000 of 400,000 words; 100 dimensions
       quantized for the browser.
-      The diagram below is a fresh 2D projection (PCA) of just the words in your equation, not a fixed coordinate system representing the entire vocabulary.
+      The diagrams below are a fresh 2D projection (PCA) of just the words in your equation, not a fixed coordinate system representing the entire vocabulary.
     </cite>
-  
+  </header>
+
+  <div class="tabs" role="tablist">
+    <button class="tab-btn is-active" id="tabBtnExplore" type="button" role="tab" aria-selected="true">Nearest matches</button>
+    <button class="tab-btn" id="tabBtnCompare" type="button" role="tab" aria-selected="false">Compare two relationships</button>
+  </div>
+
+  <div class="tab-panel" id="panel-explore" role="tabpanel">
     <div class="card">
       <h2>Examples</h2>
       <div class="presets" id="presets"></div>
     </div>
-  </header>
 
-  <div class="card">
-    <h2>Your equation</h2>
-    <div class="current-equation">
-      <div class="chips" id="chips"><span class="chips-empty"></span></div>
-      <button class="btn clear" id="clearBtn">clear</button>
-    </div>
-    <div class="input-row">
-      <input id="wordInput" type="text" placeholder="type a word&hellip;" autocomplete="off" spellcheck="false">
-      <button class="btn square plus" id="addPlusBtn">+</button>
-      <button class="btn square minus" id="addMinusBtn">&minus;</button>
-      <div class="suggestions" id="suggestions" hidden></div>
-    </div>
-    <p class="toast" id="toast"></p>
-  </div>
-
-  <div id="results-holder" class="results result-empty" aria-hidden="true">
     <div class="card">
-      <h2>Nearest matches</h2>
-      <div id="results">
+      <h2>Your equation</h2>
+      <div class="current-equation">
+        <div class="chips" id="chips"><span class="chips-empty"></span></div>
+        <button class="btn clear" id="clearBtn">clear</button>
+      </div>
+      <div class="input-row">
+        <input id="wordInput" type="text" placeholder="type a word&hellip;" autocomplete="off" spellcheck="false">
+        <button class="btn square plus" id="addPlusBtn">+</button>
+        <button class="btn square minus" id="addMinusBtn">&minus;</button>
+        <div class="suggestions" id="suggestions" hidden></div>
+      </div>
+      <p class="toast" id="toast"></p>
+    </div>
+
+    <div id="results-holder" class="reveal-holder" aria-hidden="true">
+      <div class="card">
+        <h2>Nearest matches</h2>
+        <div id="results">
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>How the words relate</h2>
+        <div class="viz-legend" id="vizLegend"></div>
+        <div id="vizHolder">
+        </div>
       </div>
     </div>
-  
+  </div>
+
+  <div class="tab-panel" id="panel-compare" role="tabpanel" hidden>
     <div class="card">
-      <h2>How the words relate</h2>
-      <div class="viz-legend" id="vizLegend"></div>
-      <div id="vizHolder">
+      <h2>Examples</h2>
+      <div class="presets" id="comparePresets"></div>
+    </div>
+
+    <div class="compare-row">
+      <div class="card compare-side">
+        <h3>Relationship A</h3>
+        <div class="current-equation">
+          <div class="chips" id="chipsA"><span class="chips-empty"></span></div>
+          <button class="btn clear" id="clearBtnA">clear</button>
+        </div>
+        <div class="input-row">
+          <input id="wordInputA" type="text" placeholder="type a word&hellip;" autocomplete="off" spellcheck="false">
+          <button class="btn square plus" id="addPlusBtnA">+</button>
+          <button class="btn square minus" id="addMinusBtnA">&minus;</button>
+          <div class="suggestions" id="suggestionsA" hidden></div>
+        </div>
+        <p class="toast" id="toastA"></p>
+      </div>
+
+      <div class="card compare-side">
+        <h3>Relationship B</h3>
+        <div class="current-equation">
+          <div class="chips" id="chipsB"><span class="chips-empty"></span></div>
+          <button class="btn clear" id="clearBtnB">clear</button>
+        </div>
+        <div class="input-row">
+          <input id="wordInputB" type="text" placeholder="type a word&hellip;" autocomplete="off" spellcheck="false">
+          <button class="btn square plus" id="addPlusBtnB">+</button>
+          <button class="btn square minus" id="addMinusBtnB">&minus;</button>
+          <div class="suggestions" id="suggestionsB" hidden></div>
+        </div>
+        <p class="toast" id="toastB"></p>
+      </div>
+    </div>
+
+    <div id="compare-results-holder" class="reveal-holder" aria-hidden="true">
+      <div class="card">
+        <h2>How aligned are they?</h2>
+        <div id="compareScore"></div>
+      </div>
+
+      <div class="card">
+        <h2>How the relationships compare</h2>
+        <div class="viz-legend" id="compareVizLegend"></div>
+        <div id="compareVizHolder"></div>
       </div>
     </div>
   </div>
@@ -602,42 +791,9 @@
     var unitVectors = null; // Float32Array(VOCAB*DIMS), precomputed unit-length
     var ready = false;
 
-    var state = { terms: [] }; // [{word, sign}]
-
-    var chipsEl = document.getElementById("chips");
-    var inputEl = document.getElementById("wordInput");
-    var suggestionsEl = document.getElementById("suggestions");
-    var toastEl = document.getElementById("toast");
-    var resultsHolderEl = document.getElementById("results-holder");
-    var resultsEl = document.getElementById("results");
-    var vizHolder = document.getElementById("vizHolder");
-    var vizLegend = document.getElementById("vizLegend");
-    var presetsEl = document.getElementById("presets");
     var overlay = document.getElementById("loadOverlay");
     var loadFill = document.getElementById("loadFill");
     var loadLabel = document.getElementById("loadLabel");
-
-    var PRESETS = [
-      { label: "king − man + woman", terms: [["king", 1], ["man", -1], ["woman", 1]] },
-      { label: "paris − france + italy", terms: [["paris", 1], ["france", -1], ["italy", 1]] },
-      { label: "bigger − big + cold", terms: [["bigger", 1], ["big", -1], ["cold", 1]] },
-      { label: "doctor − man + woman", terms: [["doctor", 1], ["man", -1], ["woman", 1]] }
-    ];
-
-    function buildPresetButtons() {
-      PRESETS.forEach(function (p) {
-        var b = document.createElement("button");
-        b.className = "preset-btn";
-        b.type = "button";
-        b.textContent = p.label;
-        b.addEventListener("click", function () {
-          state.terms = p.terms.map(function (t) { return { word: t[0], sign: t[1] }; });
-          renderChips();
-          recompute();
-        });
-        presetsEl.appendChild(b);
-      });
-    }
 
     // ---------- data loading ----------
     function fetchWithProgress(url, onBytes) {
@@ -737,60 +893,212 @@
       return unitVectors.subarray(idx * DIMS, idx * DIMS + DIMS);
     }
 
-    // ---------- suggestions ----------
-    function suggestionsFor(prefix, limit) {
-      prefix = prefix.toLowerCase();
-      var out = [];
-      for (var i = 0; i < words.length && out.length < limit; i++) {
-        if (words[i].indexOf(prefix) === 0) out.push(words[i]);
-      }
-      return out;
-    }
-
-    function renderSuggestions() {
-      var q = inputEl.value.trim().toLowerCase();
-      suggestionsEl.innerHTML = "";
-      if (q.length < 2) { suggestionsEl.hidden = true; return; }
-      var matches = suggestionsFor(q, 7);
-      if (!matches.length) { suggestionsEl.hidden = true; return; }
-      matches.forEach(function (w) {
-        var b = document.createElement("button");
-        b.type = "button";
-        b.textContent = w;
-        b.addEventListener("mousedown", function (e) {
-          e.preventDefault();
-          inputEl.value = w;
-          suggestionsEl.hidden = true;
-          inputEl.focus();
-        });
-        suggestionsEl.appendChild(b);
+    function buildVector(terms) {
+      var vec = new Float32Array(DIMS);
+      terms.forEach(function (t) {
+        var v = getUnitVec(wordIndex.get(t.word));
+        for (var d = 0; d < DIMS; d++) vec[d] += t.sign * v[d];
       });
-      suggestionsEl.hidden = false;
+      var norm = 0;
+      for (var d2 = 0; d2 < DIMS; d2++) norm += vec[d2] * vec[d2];
+      norm = Math.sqrt(norm) || 1;
+      for (d2 = 0; d2 < DIMS; d2++) vec[d2] /= norm;
+      return vec;
     }
 
-    // ---------- term management ----------
-    function showToast(msg) {
-      toastEl.textContent = msg;
-      if (msg) setTimeout(function () { if (toastEl.textContent === msg) toastEl.textContent = ""; }, 3200);
+    function formatEquationLabel(terms) {
+      return terms.map(function (t, i) {
+        if (i === 0) return t.sign < 0 ? ("−" + t.word) : t.word;
+        return (t.sign > 0 ? " + " : " − ") + t.word;
+      }).join("");
     }
 
-    function addTerm(raw, sign) {
-      var word = raw.trim().toLowerCase();
-      if (!word) return;
-      if (!wordIndex.has(word)) {
-        var sugg = suggestionsFor(word, 1)[0];
-        showToast(sugg
-          ? "“" + word + "” isn't in the list — did you mean “" + sugg + "”?"
-          : "“" + word + "” isn't in our 100,000-word list. Try a simpler or more common form.");
-        return;
+    function escapeXml(s) {
+      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    // ---------- reusable equation builder (chips + input + suggestions) ----------
+    function createEquationBuilder(cfg) {
+      // cfg: chipsEl, inputEl, suggestionsEl, toastEl, plusBtn, minusBtn, clearBtn, onChange
+      var state = { terms: [] };
+
+      function suggestionsFor(prefix, limit) {
+        prefix = prefix.toLowerCase();
+        var out = [];
+        for (var i = 0; i < words.length && out.length < limit; i++) {
+          if (words[i].indexOf(prefix) === 0) out.push(words[i]);
+        }
+        return out;
       }
-      state.terms.push({ word: word, sign: sign });
-      renderChips();
-      recompute();
+
+      function renderSuggestions() {
+        var q = cfg.inputEl.value.trim().toLowerCase();
+        cfg.suggestionsEl.innerHTML = "";
+        if (q.length < 2) { cfg.suggestionsEl.hidden = true; return; }
+        var matches = suggestionsFor(q, 7);
+        if (!matches.length) { cfg.suggestionsEl.hidden = true; return; }
+        matches.forEach(function (w) {
+          var b = document.createElement("button");
+          b.type = "button";
+          b.textContent = w;
+          b.addEventListener("mousedown", function (e) {
+            e.preventDefault();
+            cfg.inputEl.value = w;
+            cfg.suggestionsEl.hidden = true;
+            cfg.inputEl.focus();
+          });
+          cfg.suggestionsEl.appendChild(b);
+        });
+        cfg.suggestionsEl.hidden = false;
+      }
+
+      function showToast(msg) {
+        cfg.toastEl.textContent = msg;
+        if (msg) setTimeout(function () { if (cfg.toastEl.textContent === msg) cfg.toastEl.textContent = ""; }, 3200);
+      }
+
+      function renderChips() {
+        cfg.chipsEl.innerHTML = "";
+        if (!state.terms.length) {
+          var e = document.createElement("span");
+          e.className = "chips-empty";
+          cfg.chipsEl.appendChild(e);
+          return;
+        }
+        state.terms.forEach(function (t, i) {
+          var chip = document.createElement("span");
+          chip.className = "chip " + (t.sign > 0 ? "plus" : "minus");
+          var signBtn = document.createElement("span");
+          signBtn.className = "sign";
+          signBtn.title = "Click to flip sign";
+          signBtn.textContent = t.sign > 0 ? "+" : "−";
+          signBtn.addEventListener("click", function () { toggleSign(i); });
+          var label = document.createElement("span");
+          label.textContent = t.word;
+          var rm = document.createElement("button");
+          rm.className = "remove";
+          rm.type = "button";
+          rm.setAttribute("aria-label", "Remove " + t.word);
+          rm.textContent = "×";
+          rm.addEventListener("click", function () { removeTerm(i); });
+          chip.appendChild(signBtn);
+          chip.appendChild(label);
+          chip.appendChild(rm);
+          cfg.chipsEl.appendChild(chip);
+        });
+      }
+
+      function addTerm(raw, sign) {
+        var word = raw.trim().toLowerCase();
+        if (!word) return;
+        if (!wordIndex.has(word)) {
+          var sugg = suggestionsFor(word, 1)[0];
+          showToast(sugg
+            ? "“" + word + "” isn't in the list — did you mean “" + sugg + "”?"
+            : "“" + word + "” isn't in our 100,000-word list. Try a simpler or more common form.");
+          return;
+        }
+        state.terms.push({ word: word, sign: sign });
+        renderChips();
+        cfg.onChange();
+      }
+
+      function removeTerm(i) { state.terms.splice(i, 1); renderChips(); cfg.onChange(); }
+      function toggleSign(i) { state.terms[i].sign *= -1; renderChips(); cfg.onChange(); }
+
+      function setTerms(terms) {
+        state.terms = terms.map(function (t) { return { word: t[0], sign: t[1] }; });
+        renderChips();
+        cfg.onChange();
+      }
+
+      function clear() {
+        state.terms = [];
+        renderChips();
+        cfg.toastEl.textContent = "";
+        cfg.onChange();
+      }
+
+      cfg.plusBtn.addEventListener("click", function () {
+        addTerm(cfg.inputEl.value, 1); cfg.inputEl.value = ""; cfg.suggestionsEl.hidden = true; cfg.inputEl.focus();
+      });
+      cfg.minusBtn.addEventListener("click", function () {
+        addTerm(cfg.inputEl.value, -1); cfg.inputEl.value = ""; cfg.suggestionsEl.hidden = true; cfg.inputEl.focus();
+      });
+      cfg.clearBtn.addEventListener("click", clear);
+      cfg.inputEl.addEventListener("keydown", function (e) {
+        if (e.key === "Enter") {
+          e.preventDefault();
+          addTerm(cfg.inputEl.value, 1);
+          cfg.inputEl.value = "";
+          cfg.suggestionsEl.hidden = true;
+        } else if (e.key === "Escape") {
+          cfg.suggestionsEl.hidden = true;
+        }
+      });
+      cfg.inputEl.addEventListener("input", renderSuggestions);
+      document.addEventListener("click", function (e) {
+        if (!cfg.suggestionsEl.contains(e.target) && e.target !== cfg.inputEl) cfg.suggestionsEl.hidden = true;
+      });
+
+      return { state: state, setTerms: setTerms, clear: clear };
     }
 
-    function removeTerm(i) { state.terms.splice(i, 1); renderChips(); recompute(); }
-    function toggleSign(i) { state.terms[i].sign *= -1; renderChips(); recompute(); }
+    // ---------- tab switching ----------
+    var tabBtnExplore = document.getElementById("tabBtnExplore");
+    var tabBtnCompare = document.getElementById("tabBtnCompare");
+    var panelExplore = document.getElementById("panel-explore");
+    var panelCompare = document.getElementById("panel-compare");
+
+    function showTab(name) {
+      var isExplore = name === "explore";
+      panelExplore.hidden = !isExplore;
+      panelCompare.hidden = isExplore;
+      tabBtnExplore.classList.toggle("is-active", isExplore);
+      tabBtnExplore.setAttribute("aria-selected", String(isExplore));
+      tabBtnCompare.classList.toggle("is-active", !isExplore);
+      tabBtnCompare.setAttribute("aria-selected", String(!isExplore));
+    }
+    tabBtnExplore.addEventListener("click", function () { showTab("explore"); });
+    tabBtnCompare.addEventListener("click", function () { showTab("compare"); });
+
+    // ================= tab 1: nearest matches =================
+    var resultsHolderEl = document.getElementById("results-holder");
+    var resultsEl = document.getElementById("results");
+    var vizHolder = document.getElementById("vizHolder");
+    var vizLegend = document.getElementById("vizLegend");
+    var presetsEl = document.getElementById("presets");
+
+    var PRESETS = [
+      { label: "king − man + woman", terms: [["king", 1], ["man", -1], ["woman", 1]] },
+      { label: "paris − france + italy", terms: [["paris", 1], ["france", -1], ["italy", 1]] },
+      { label: "bigger − big + cold", terms: [["bigger", 1], ["big", -1], ["cold", 1]] },
+      { label: "doctor − man + woman", terms: [["doctor", 1], ["man", -1], ["woman", 1]] }
+    ];
+
+    function buildPresetButtons(container, presets, onPick) {
+      presets.forEach(function (p) {
+        var b = document.createElement("button");
+        b.className = "preset-btn";
+        b.type = "button";
+        b.textContent = p.label;
+        b.addEventListener("click", function () { onPick(p); });
+        container.appendChild(b);
+      });
+    }
+
+    var builderExplore = createEquationBuilder({
+      chipsEl: document.getElementById("chips"),
+      inputEl: document.getElementById("wordInput"),
+      suggestionsEl: document.getElementById("suggestions"),
+      toastEl: document.getElementById("toast"),
+      plusBtn: document.getElementById("addPlusBtn"),
+      minusBtn: document.getElementById("addMinusBtn"),
+      clearBtn: document.getElementById("clearBtn"),
+      onChange: function () { recomputeExplore(); }
+    });
+
+    buildPresetButtons(presetsEl, PRESETS, function (p) { builderExplore.setTerms(p.terms); });
 
     var resultsRevealFrame = 0;
     var resultsHideTimer = 0;
@@ -859,57 +1167,18 @@
       }, ms + 40);
     }
 
-    function renderChips() {
-      chipsEl.innerHTML = "";
-      if (!state.terms.length) {
-        var e = document.createElement("span");
-        e.className = "chips-empty";
-        chipsEl.appendChild(e);
-        return;
-      }
-      state.terms.forEach(function (t, i) {
-        var chip = document.createElement("span");
-        chip.className = "chip " + (t.sign > 0 ? "plus" : "minus");
-        var signBtn = document.createElement("span");
-        signBtn.className = "sign";
-        signBtn.title = "Click to flip sign";
-        signBtn.textContent = t.sign > 0 ? "+" : "−";
-        signBtn.addEventListener("click", function () { toggleSign(i); });
-        var label = document.createElement("span");
-        label.textContent = t.word;
-        var rm = document.createElement("button");
-        rm.className = "remove";
-        rm.type = "button";
-        rm.setAttribute("aria-label", "Remove " + t.word);
-        rm.textContent = "×";
-        rm.addEventListener("click", function () { removeTerm(i); });
-        chip.appendChild(signBtn);
-        chip.appendChild(label);
-        chip.appendChild(rm);
-        chipsEl.appendChild(chip);
-      });
-    }
-
     // ---------- compute ----------
-    function recompute() {
+    function recomputeExplore() {
       if (!ready) return;
-      if (!state.terms.length) {
+      var terms = builderExplore.state.terms;
+      if (!terms.length) {
         hideResults();
         return;
       }
 
-      var query = new Float32Array(DIMS);
+      var query = buildVector(terms);
       var excluded = new Set();
-      state.terms.forEach(function (t) {
-        var idx = wordIndex.get(t.word);
-        excluded.add(idx);
-        var v = getUnitVec(idx);
-        for (var d = 0; d < DIMS; d++) query[d] += t.sign * v[d];
-      });
-      var qnorm = 0;
-      for (var d2 = 0; d2 < DIMS; d2++) qnorm += query[d2] * query[d2];
-      qnorm = Math.sqrt(qnorm) || 1;
-      for (d2 = 0; d2 < DIMS; d2++) query[d2] /= qnorm;
+      terms.forEach(function (t) { excluded.add(wordIndex.get(t.word)); });
 
       var top = [];
       for (var i = 0; i < VOCAB; i++) {
@@ -927,7 +1196,7 @@
       top.sort(function (a, b) { return b.score - a.score; });
 
       renderResults(top);
-      renderViz(query, top);
+      renderViz(terms, top);
       revealResults();
     }
 
@@ -1021,7 +1290,18 @@
       });
     }
 
-    function renderViz(query, top) {
+    function svgFrame(W, H) {
+      var svg = [];
+      svg.push('<svg class="viz" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">');
+      svg.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="none" stroke="var(--ink)" stroke-width="2"/>');
+      svg.push('<line x1="0" y1="' + (H / 2) + '" x2="' + W + '" y2="' + (H / 2) + '" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="2,3"/>');
+      svg.push('<line x1="' + (W / 2) + '" y1="0" x2="' + (W / 2) + '" y2="' + H + '" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="2,3"/>');
+      svg.push('<text x="' + (W - 10) + '" y="' + (H / 2 - 8) + '" text-anchor="end" font-size="10" font-weight="700" fill="var(--ink)">PC1</text>');
+      svg.push('<text x="' + (W / 2 + 8) + '" y="16" font-size="10" font-weight="700" fill="var(--ink)">PC2</text>');
+      return svg;
+    }
+
+    function renderViz(terms, top) {
       var points = [];
       var meta = [];
 
@@ -1029,7 +1309,7 @@
       points.push(zero); meta.push({ role: "origin" });
 
       var running = new Float64Array(DIMS);
-      state.terms.forEach(function (t) {
+      terms.forEach(function (t) {
         var v = getUnitVec(wordIndex.get(t.word));
         for (var d = 0; d < DIMS; d++) running[d] += t.sign * v[d];
         points.push(Array.prototype.slice.call(running));
@@ -1052,13 +1332,7 @@
       function sx(x) { return W / 2 + (x / maxAbs) * (W / 2 - 40); }
       function sy(y) { return H / 2 - (y / maxAbs) * (H / 2 - 30); }
 
-      var svg = [];
-      svg.push('<svg class="viz" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">');
-      svg.push('<rect x="1" y="1" width="' + (W - 2) + '" height="' + (H - 2) + '" fill="none" stroke="var(--ink)" stroke-width="2"/>');
-      svg.push('<line x1="0" y1="' + (H / 2) + '" x2="' + W + '" y2="' + (H / 2) + '" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="2,3"/>');
-      svg.push('<line x1="' + (W / 2) + '" y1="0" x2="' + (W / 2) + '" y2="' + H + '" stroke="var(--ink)" stroke-width="1.5" stroke-dasharray="2,3"/>');
-      svg.push('<text x="' + (W - 10) + '" y="' + (H / 2 - 8) + '" text-anchor="end" font-size="10" font-weight="700" fill="var(--ink)">PC1</text>');
-      svg.push('<text x="' + (W / 2 + 8) + '" y="16" font-size="10" font-weight="700" fill="var(--ink)">PC2</text>');
+      var svg = svgFrame(W, H);
 
       // dotted path through origin -> steps
       var pathPts = [];
@@ -1098,36 +1372,199 @@
         '<span><span class="swatch" style="background:var(--result)"></span>nearest match</span>';
     }
 
-    function escapeXml(s) {
-      return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    // ================= tab 2: compare two relationships =================
+    var compareHolderEl = document.getElementById("compare-results-holder");
+    var compareScoreEl = document.getElementById("compareScore");
+    var compareVizHolder = document.getElementById("compareVizHolder");
+    var compareVizLegend = document.getElementById("compareVizLegend");
+    var comparePresetsEl = document.getElementById("comparePresets");
+
+    var COMPARE_PRESETS = [
+      {
+        label: "man − woman  ≈  programmer − homemaker",
+        a: [["man", 1], ["woman", -1]],
+        b: [["programmer", 1], ["homemaker", -1]]
+      },
+      {
+        label: "man − woman  ≈  ceo − secretary",
+        a: [["man", 1], ["woman", -1]],
+        b: [["ceo", 1], ["secretary", -1]]
+      },
+      {
+        label: "man − woman  ≈  doctor − nurse",
+        a: [["man", 1], ["woman", -1]],
+        b: [["doctor", 1], ["nurse", -1]]
+      },
+      {
+        label: "man − woman  ≈  engineer − housewife",
+        a: [["man", 1], ["woman", -1]],
+        b: [["engineer", 1], ["housewife", -1]]
+      },
+      {
+        label: "man − woman  ≈  cat − dog  (control: unrelated)",
+        a: [["man", 1], ["woman", -1]],
+        b: [["cat", 1], ["dog", -1]]
+      }
+    ];
+
+    var builderA = createEquationBuilder({
+      chipsEl: document.getElementById("chipsA"),
+      inputEl: document.getElementById("wordInputA"),
+      suggestionsEl: document.getElementById("suggestionsA"),
+      toastEl: document.getElementById("toastA"),
+      plusBtn: document.getElementById("addPlusBtnA"),
+      minusBtn: document.getElementById("addMinusBtnA"),
+      clearBtn: document.getElementById("clearBtnA"),
+      onChange: function () { recomputeCompare(); }
+    });
+
+    var builderB = createEquationBuilder({
+      chipsEl: document.getElementById("chipsB"),
+      inputEl: document.getElementById("wordInputB"),
+      suggestionsEl: document.getElementById("suggestionsB"),
+      toastEl: document.getElementById("toastB"),
+      plusBtn: document.getElementById("addPlusBtnB"),
+      minusBtn: document.getElementById("addMinusBtnB"),
+      clearBtn: document.getElementById("clearBtnB"),
+      onChange: function () { recomputeCompare(); }
+    });
+
+    buildPresetButtons(comparePresetsEl, COMPARE_PRESETS, function (p) {
+      builderA.setTerms(p.a);
+      builderB.setTerms(p.b);
+    });
+
+    function revealCompareResults() {
+      compareHolderEl.style.transition = "none";
+      void compareHolderEl.offsetWidth;
+      compareHolderEl.style.transition = "";
+      requestAnimationFrame(function () {
+        compareHolderEl.classList.add("is-visible");
+        compareHolderEl.setAttribute("aria-hidden", "false");
+      });
     }
 
-    // ---------- wire up ----------
-    document.getElementById("addPlusBtn").addEventListener("click", function () {
-      addTerm(inputEl.value, 1); inputEl.value = ""; suggestionsEl.hidden = true; inputEl.focus();
-    });
-    document.getElementById("addMinusBtn").addEventListener("click", function () {
-      addTerm(inputEl.value, -1); inputEl.value = ""; suggestionsEl.hidden = true; inputEl.focus();
-    });
-    document.getElementById("clearBtn").addEventListener("click", function () {
-      state.terms = []; renderChips(); recompute(); toastEl.textContent = "";
-    });
-    inputEl.addEventListener("keydown", function (e) {
-      if (e.key === "Enter") {
-        e.preventDefault();
-        addTerm(inputEl.value, 1);
-        inputEl.value = "";
-        suggestionsEl.hidden = true;
-      } else if (e.key === "Escape") {
-        suggestionsEl.hidden = true;
-      }
-    });
-    inputEl.addEventListener("input", renderSuggestions);
-    document.addEventListener("click", function (e) {
-      if (!suggestionsEl.contains(e.target) && e.target !== inputEl) suggestionsEl.hidden = true;
-    });
+    function hideCompareResults() {
+      compareHolderEl.classList.remove("is-visible");
+      compareHolderEl.setAttribute("aria-hidden", "true");
+      compareScoreEl.innerHTML = "";
+      compareVizHolder.innerHTML = "";
+      compareVizLegend.innerHTML = "";
+    }
 
-    buildPresetButtons();
+    function recomputeCompare() {
+      if (!ready) return;
+      var termsA = builderA.state.terms, termsB = builderB.state.terms;
+      if (!termsA.length || !termsB.length) {
+        hideCompareResults();
+        return;
+      }
+      var vecA = buildVector(termsA), vecB = buildVector(termsB);
+      var score = 0;
+      for (var d = 0; d < DIMS; d++) score += vecA[d] * vecB[d];
+      score = Math.max(-1, Math.min(1, score));
+
+      renderCompareScore(score, termsA, termsB);
+      renderCompareViz(termsA, termsB);
+      revealCompareResults();
+    }
+
+    function renderCompareScore(score, termsA, termsB) {
+      var labelA = formatEquationLabel(termsA);
+      var labelB = formatEquationLabel(termsB);
+      var pct = ((score + 1) / 2) * 100;
+      var fillLeft, fillWidth, fillColor;
+      if (score >= 0) { fillLeft = 50; fillWidth = pct - 50; fillColor = "var(--result)"; }
+      else { fillLeft = pct; fillWidth = 50 - pct; fillColor = "var(--minus)"; }
+
+      var abs = Math.abs(score);
+      var interp;
+      if (abs >= 0.5) interp = score > 0 ? "strongly parallel" : "strongly opposed";
+      else if (abs >= 0.2) interp = score > 0 ? "somewhat parallel" : "somewhat opposed";
+      else interp = "roughly unrelated";
+
+      compareScoreEl.innerHTML =
+        '<div class="compare-score">' +
+        '<div class="compare-score-value">' + score.toFixed(3) + '</div>' +
+        '<div class="compare-gauge-wrap">' +
+        '<div class="compare-gauge-mid"></div>' +
+        '<div class="compare-gauge-fill" style="left:' + fillLeft + '%;width:' + fillWidth + '%;background:' + fillColor + '"></div>' +
+        '</div>' +
+        '<div class="compare-scale-labels"><span>− opposite</span><span>0 unrelated</span><span>+ parallel</span></div>' +
+        '<p class="compare-label"><strong>' + escapeXml(labelA) + '</strong> is <strong>' + interp + '</strong> to <strong>' + escapeXml(labelB) + '</strong> in this embedding space.</p>' +
+        '</div>';
+    }
+
+    function renderCompareViz(termsA, termsB) {
+      var points = [];
+      var meta = [];
+      var zero = new Array(DIMS).fill(0);
+      points.push(zero); meta.push({ role: "origin" });
+
+      function addPath(terms, side) {
+        var running = new Float64Array(DIMS);
+        terms.forEach(function (t, i) {
+          var v = getUnitVec(wordIndex.get(t.word));
+          for (var d = 0; d < DIMS; d++) running[d] += t.sign * v[d];
+          points.push(Array.prototype.slice.call(running));
+          meta.push({
+            role: "step",
+            side: side,
+            label: (t.sign > 0 ? "+" : "−") + t.word,
+            isLast: i === terms.length - 1
+          });
+        });
+      }
+      addPath(termsA, "A");
+      addPath(termsB, "B");
+
+      var proj = pca2(points);
+
+      var maxAbs = 0.001;
+      proj.forEach(function (pt) { maxAbs = Math.max(maxAbs, Math.abs(pt[0]), Math.abs(pt[1])); });
+      maxAbs *= 1.25;
+
+      var W = 640, H = 420;
+      function sx(x) { return W / 2 + (x / maxAbs) * (W / 2 - 40); }
+      function sy(y) { return H / 2 - (y / maxAbs) * (H / 2 - 30); }
+
+      var svg = svgFrame(W, H);
+
+      ["A", "B"].forEach(function (side) {
+        var color = side === "A" ? "var(--plus)" : "var(--relb)";
+        var pathPts = [proj[0]];
+        for (var i = 0; i < meta.length; i++) if (meta[i].side === side) pathPts.push(proj[i]);
+        if (pathPts.length > 1) {
+          var d = "M " + sx(pathPts[0][0]) + " " + sy(pathPts[0][1]);
+          for (var j = 1; j < pathPts.length; j++) d += " L " + sx(pathPts[j][0]) + " " + sy(pathPts[j][1]);
+          svg.push('<path d="' + d + '" fill="none" stroke="' + color + '" stroke-width="2.5" stroke-dasharray="1,5" stroke-linecap="round"/>');
+        }
+      });
+
+      svg.push('<circle cx="' + sx(proj[0][0]) + '" cy="' + sy(proj[0][1]) + '" r="4" fill="var(--paper)" stroke="var(--ink)" stroke-width="0"/>');
+      svg.push('<text x="' + sx(proj[0][0]) + '" y="' + (sy(proj[0][1]) - 10) + '" font-size="9" font-weight="700" fill="var(--ink)" text-anchor="middle">START</text>');
+
+      proj.forEach(function (pt, i) {
+        var m = meta[i];
+        if (m.role !== "step") return;
+        var x = sx(pt[0]), y = sy(pt[1]);
+        var color = m.side === "A" ? "var(--plus)" : "var(--relb)";
+        var r = m.isLast ? 9 : 6;
+        svg.push('<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + color + '" stroke="var(--ink)" stroke-width="0"/>');
+        var label = m.isLast ? (m.side + ": " + m.label) : m.label;
+        var dy = (i % 2 === 0) ? -11 : 17;
+        svg.push('<text x="' + x + '" y="' + (y + dy) + '" font-size="10" fill="var(--ink)" text-anchor="middle" font-weight="700">' + escapeXml(label) + '</text>');
+      });
+
+      svg.push("</svg>");
+      compareVizHolder.innerHTML = svg.join("");
+
+      compareVizLegend.innerHTML =
+        '<span><span class="swatch" style="background:var(--plus)"></span>relationship A</span>' +
+        '<span><span class="swatch" style="background:var(--relb)"></span>relationship B</span>';
+    }
+
+    // ---------- boot ----------
     loadAll().then(function () {
       overlay.remove();
     }).catch(function (err) {
