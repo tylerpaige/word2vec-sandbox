@@ -1,0 +1,13 @@
+{
+  "name": "word2vec-preview",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Local dev preview server for the Word Algebra web app.",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.2"
+  }
+}
