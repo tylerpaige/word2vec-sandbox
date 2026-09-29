@@ -1,0 +1,8 @@
+# Static site. Connect the repo in Netlify, or run `netlify deploy --prod`.
+# There is no build. Netlify Drop does not read this file: drop the webapp folder.
+[build]
+  publish = "webapp"
+
+# Leave the hand-written page alone. Post-processing can rewrite inline scripts.
+[build.processing]
+  skip_processing = true

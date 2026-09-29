@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Word Algebra</title>
+<style>
+  :root {
+    --paper: #f2f5f4;
+    --surface: #ffffff;
+    --ink: #12181f;
+    --ink-soft: #57626c;
+    --ink-muted: #8b969c;
+    --line: #dde3e3;
+    --plus: #2a78d6;
+    --minus: #eb6834;
+    --result: #1baf7a;
+    --result-text: #0f7d54;
+    --danger: #c23b3b;
+    --radius: 12px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #0f1216;
+      --surface: #171c22;
+      --ink: #edf1f3;
+      --ink-soft: #a7b3ba;
+      --ink-muted: #74828a;
+      --line: #2b3238;
+      --plus: #3987e5;
+      --minus: #d95926;
+      --result: #199e70;
+      --result-text: #4fd6ad;
+      --danger: #e0685f;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #0f1216;
+    --surface: #171c22;
+    --ink: #edf1f3;
+    --ink-soft: #a7b3ba;
+    --ink-muted: #74828a;
+    --line: #2b3238;
+    --plus: #3987e5;
+    --minus: #d95926;
+    --result: #199e70;
+    --result-text: #4fd6ad;
+    --danger: #e0685f;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+    padding-inline: 16px;
+    padding-block: 32px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+
+  h1 {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: clamp(1.5rem, 4vw, 2.1rem);
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+  h1 .op { color: var(--plus); }
+  h1 .op.minus { color: var(--minus); }
+  p.lede {
+    color: var(--ink-soft);
+    font-size: 0.98rem;
+    line-height: 1.5;
+    max-width: 60ch;
+    margin: 0 0 28px;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 20px;
+  }
+  .card h2 {
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--ink-muted);
+    margin: 0 0 14px;
+    font-weight: 600;
+  }
+
+  /* presets */
+  .presets {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+  .preset-btn {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.82rem;
+    background: var(--paper);
+    color: var(--ink);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 7px 14px;
+    cursor: pointer;
+    transition: border-color 0.15s, transform 0.1s;
+  }
+  .preset-btn:hover { border-color: var(--plus); }
+  .preset-btn:active { transform: scale(0.97); }
+  .preset-note {
+    font-size: 0.82rem;
+    color: var(--ink-muted);
+    margin: 10px 0 0;
+    line-height: 1.5;
+  }
+
+  /* equation builder */
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-height: 40px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+  .chips-empty {
+    color: var(--ink-muted);
+    font-size: 0.9rem;
+    font-style: italic;
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.92rem;
+    border-radius: 999px;
+    padding: 6px 6px 6px 12px;
+    border: 1.5px solid transparent;
+    animation: chip-in 0.16s ease-out;
+  }
+  @keyframes chip-in { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: none; } }
+  .chip.plus { background: color-mix(in srgb, var(--plus) 14%, var(--surface)); border-color: color-mix(in srgb, var(--plus) 35%, transparent); color: var(--ink); }
+  .chip.minus { background: color-mix(in srgb, var(--minus) 14%, var(--surface)); border-color: color-mix(in srgb, var(--minus) 35%, transparent); color: var(--ink); }
+  .chip .sign {
+    font-weight: 700;
+    cursor: pointer;
+    width: 16px;
+    text-align: center;
+  }
+  .chip.plus .sign { color: var(--plus); }
+  .chip.minus .sign { color: var(--minus); }
+  .chip .remove {
+    background: none;
+    border: none;
+    color: var(--ink-muted);
+    cursor: pointer;
+    font-size: 0.95rem;
+    line-height: 1;
+    padding: 2px 4px;
+    border-radius: 50%;
+  }
+  .chip .remove:hover { color: var(--danger); }
+
+  .input-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    position: relative;
+  }
+  #wordInput {
+    flex: 1 1 180px;
+    min-width: 0;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.95rem;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1.5px solid var(--line);
+    background: var(--paper);
+    color: var(--ink);
+  }
+  #wordInput:focus {
+    outline: none;
+    border-color: var(--plus);
+  }
+  .btn {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border-radius: 8px;
+    border: 1.5px solid var(--line);
+    background: var(--surface);
+    color: var(--ink);
+    padding: 10px 14px;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn:hover { border-color: var(--ink-soft); }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .btn.plus { border-color: color-mix(in srgb, var(--plus) 50%, var(--line)); color: var(--plus); }
+  .btn.minus { border-color: color-mix(in srgb, var(--minus) 50%, var(--line)); color: var(--minus); }
+  .btn.clear { color: var(--ink-muted); }
+
+  .suggestions {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    min-width: 220px;
+    max-width: 100%;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+    z-index: 5;
+    overflow: hidden;
+  }
+  .suggestions button {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: none;
+    border: none;
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.88rem;
+    color: var(--ink);
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  .suggestions button:hover { background: var(--paper); }
+
+  .toast {
+    font-size: 0.85rem;
+    color: var(--danger);
+    margin-top: 10px;
+    min-height: 1.2em;
+  }
+
+  /* results */
+  .result-row {
+    display: grid;
+    grid-template-columns: 22px 1fr auto;
+    align-items: center;
+    gap: 10px;
+    padding: 7px 0;
+  }
+  .result-rank {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    color: var(--ink-muted);
+    font-size: 0.85rem;
+  }
+  .result-bar-wrap {
+    background: var(--line);
+    border-radius: 4px;
+    height: 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .result-bar {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--result);
+    transition: width 0.4s cubic-bezier(.2,.8,.2,1);
+  }
+  .result-word {
+    position: absolute;
+    left: 8px;
+    top: 0;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: var(--ink);
+    mix-blend-mode: normal;
+  }
+  .result-score {
+    font-family: "IBM Plex Mono", ui-monospace, monospace;
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    font-variant-numeric: tabular-nums;
+    min-width: 3.6em;
+    text-align: right;
+  }
+  .results-empty {
+    color: var(--ink-muted);
+    font-size: 0.9rem;
+    font-style: italic;
+  }
+
+  /* viz */
+  .viz-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    margin-bottom: 10px;
+  }
+  .viz-legend span { display: inline-flex; align-items: center; gap: 6px; }
+  .swatch { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  svg.viz { width: 100%; height: auto; overflow: visible; }
+  svg.viz text { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+
+  /* loading overlay */
+  #loadOverlay {
+    position: fixed;
+    inset: 0;
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    z-index: 50;
+  }
+  .load-bar {
+    width: 220px;
+    height: 6px;
+    background: var(--line);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .load-fill {
+    height: 100%;
+    width: 0%;
+    background: var(--plus);
+    transition: width 0.15s linear;
+  }
+  #loadOverlay p { color: var(--ink-soft); font-size: 0.9rem; }
+
+  footer {
+    font-size: 0.78rem;
+    color: var(--ink-muted);
+    line-height: 1.6;
+    margin-top: 8px;
+  }
+  footer a { color: inherit; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .chip, .result-bar { animation: none !important; transition: none !important; }
+  }
+</style>
+
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+</head>
+<body>
+
+<div id="loadOverlay">
+  <div class="load-bar"><div class="load-fill" id="loadFill"></div></div>
+  <p id="loadLabel">Loading 100,000 word vectors&hellip;</p>
+</div>
+
+<div class="wrap">
+  <h1>king <span class="op minus">&minus;</span> man <span class="op">+</span> woman <span class="op">=</span> ?</h1>
+  <p class="lede">Word2vec-style embeddings turn words into points in space &mdash; and the directions between them turn out to mean things. Build your own equation below and see what word comes out.</p>
+
+  <div class="card">
+    <h2>Try one</h2>
+    <div class="presets" id="presets"></div>
+    <p class="preset-note">Some of these reveal patterns worth discussing &mdash; including biased ones baked in from the text the model learned from.</p>
+  </div>
+
+  <div class="card">
+    <h2>Your equation</h2>
+    <div class="chips" id="chips"><span class="chips-empty">Add words below to build an equation&hellip;</span></div>
+    <div class="input-row">
+      <input id="wordInput" type="text" placeholder="type a word&hellip;" autocomplete="off" spellcheck="false">
+      <button class="btn plus" id="addPlusBtn">+ add</button>
+      <button class="btn minus" id="addMinusBtn">&minus; subtract</button>
+      <button class="btn clear" id="clearBtn">clear all</button>
+      <div class="suggestions" id="suggestions" hidden></div>
+    </div>
+    <p class="toast" id="toast"></p>
+  </div>
+
+  <div class="card">
+    <h2>Nearest matches</h2>
+    <div id="results"><p class="results-empty">Results will appear here once your equation has at least one word.</p></div>
+  </div>
+
+  <div class="card">
+    <h2>How the words relate</h2>
+    <div class="viz-legend" id="vizLegend"></div>
+    <div id="vizHolder"><p class="results-empty">The 2D map of your equation will appear here.</p></div>
+  </div>
+
+  <footer>
+    Word vectors: <a href="https://nlp.stanford.edu/projects/glove/" target="_blank" rel="noopener">GloVe</a>
+    (Pennington, Socher &amp; Manning, 2014), Stanford NLP &mdash; top 100,000 of 400,000 words, 100 dimensions, quantized for the browser.
+    The map above is a fresh 2D projection (PCA) of just the words in your equation, not a fixed coordinate system.
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+  var DIMS = 100;
+  var VOCAB = 100000;
+  // Vector data is split so each file stays under Netlify's 10MB deploy guidance.
+  var VECTOR_PARTS = ["vectors_int8.part1.b64.txt", "vectors_int8.part2.b64.txt"];
+  var EXPECTED_BYTES = {
+    "words.txt": 807117,
+    "vectors_int8.part1.b64.txt": 6666668,
+    "vectors_int8.part2.b64.txt": 6666668,
+    "scales_f32.b64.txt": 533336
+  };
+
+  var words = [];
+  var wordIndex = new Map();
+  var unitVectors = null; // Float32Array(VOCAB*DIMS), precomputed unit-length
+  var ready = false;
+
+  var state = { terms: [] }; // [{word, sign}]
+
+  var chipsEl = document.getElementById("chips");
+  var inputEl = document.getElementById("wordInput");
+  var suggestionsEl = document.getElementById("suggestions");
+  var toastEl = document.getElementById("toast");
+  var resultsEl = document.getElementById("results");
+  var vizHolder = document.getElementById("vizHolder");
+  var vizLegend = document.getElementById("vizLegend");
+  var presetsEl = document.getElementById("presets");
+  var overlay = document.getElementById("loadOverlay");
+  var loadFill = document.getElementById("loadFill");
+  var loadLabel = document.getElementById("loadLabel");
+
+  var PRESETS = [
+    { label: "king − man + woman", terms: [["king",1],["man",-1],["woman",1]] },
+    { label: "paris − france + italy", terms: [["paris",1],["france",-1],["italy",1]] },
+    { label: "bigger − big + cold", terms: [["bigger",1],["big",-1],["cold",1]] },
+    { label: "doctor − man + woman", terms: [["doctor",1],["man",-1],["woman",1]] }
+  ];
+
+  function buildPresetButtons() {
+    PRESETS.forEach(function (p) {
+      var b = document.createElement("button");
+      b.className = "preset-btn";
+      b.type = "button";
+      b.textContent = p.label;
+      b.addEventListener("click", function () {
+        state.terms = p.terms.map(function (t) { return { word: t[0], sign: t[1] }; });
+        renderChips();
+        recompute();
+      });
+      presetsEl.appendChild(b);
+    });
+  }
+
+  // ---------- data loading ----------
+  function fetchWithProgress(url, onBytes) {
+    return fetch(url).then(function (res) {
+      if (!res.ok) throw new Error("Could not load " + url + " (" + res.status + ")");
+      var headerLen = parseInt(res.headers.get("content-length") || "0", 10);
+      // A CDN may gzip these text files. Content-Length is then the compressed
+      // size, which would fill the progress bar before the download finishes.
+      var total = (!res.headers.get("content-encoding") && headerLen)
+        ? headerLen
+        : (EXPECTED_BYTES[url] || headerLen || 0);
+      var reader = res.body.getReader();
+      var received = 0;
+      var chunks = [];
+      function pump() {
+        return reader.read().then(function (r) {
+          if (r.done) {
+            var buf = new Uint8Array(received);
+            var offset = 0;
+            for (var i = 0; i < chunks.length; i++) { buf.set(chunks[i], offset); offset += chunks[i].length; }
+            return buf.buffer;
+          }
+          chunks.push(r.value);
+          received += r.value.length;
+          onBytes(received, total);
+          return pump();
+        });
+      }
+      return pump();
+    });
+  }
+
+  function base64ToBytes(b64string) {
+    var binary = atob(b64string);
+    var bytes = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+  }
+
+  function loadAll() {
+    var files = ["words.txt"].concat(VECTOR_PARTS, ["scales_f32.b64.txt"]);
+    var loadedBytes = { }, totalBytes = { };
+    files.forEach(function (f) { loadedBytes[f] = 0; totalBytes[f] = EXPECTED_BYTES[f]; });
+
+    function updateProgress() {
+      var loaded = 0, total = 0;
+      files.forEach(function (f) { loaded += loadedBytes[f]; total += totalBytes[f]; });
+      var pct = total ? Math.min(100, Math.round((loaded / total) * 100)) : 0;
+      loadFill.style.width = pct + "%";
+    }
+
+    var results = {};
+    return Promise.all(files.map(function (f) {
+      return fetchWithProgress(f, function (received, total) {
+        loadedBytes[f] = received;
+        if (total) totalBytes[f] = total;
+        updateProgress();
+      }).then(function (buf) { results[f] = buf; });
+    })).then(function () {
+      words = new TextDecoder("utf-8").decode(results["words.txt"]).split("\n").filter(Boolean);
+      var vecParts = VECTOR_PARTS.map(function (name) {
+        return base64ToBytes(new TextDecoder("ascii").decode(results[name]));
+      });
+      var vecLen = vecParts.reduce(function (n, part) { return n + part.length; }, 0);
+      var vecBytes = new Uint8Array(vecLen);
+      var vecOffset = 0;
+      vecParts.forEach(function (part) {
+        vecBytes.set(part, vecOffset);
+        vecOffset += part.length;
+      });
+      var vecInt8 = new Int8Array(vecBytes.buffer);
+      var scalesB64 = new TextDecoder("ascii").decode(results["scales_f32.b64.txt"]);
+      var scales = new Float32Array(base64ToBytes(scalesB64).buffer);
+
+      loadLabel.textContent = "Preparing vectors…";
+      unitVectors = new Float32Array(VOCAB * DIMS);
+      for (var i = 0; i < VOCAB; i++) {
+        var base = i * DIMS;
+        var scale = scales[i] / 127;
+        var sumsq = 0;
+        for (var d = 0; d < DIMS; d++) {
+          var v = vecInt8[base + d] * scale;
+          unitVectors[base + d] = v;
+          sumsq += v * v;
+        }
+        var norm = Math.sqrt(sumsq) || 1;
+        for (d = 0; d < DIMS; d++) unitVectors[base + d] /= norm;
+      }
+      for (i = 0; i < words.length; i++) {
+        if (!wordIndex.has(words[i])) wordIndex.set(words[i], i);
+      }
+      ready = true;
+    });
+  }
+
+  function getUnitVec(idx) {
+    return unitVectors.subarray(idx * DIMS, idx * DIMS + DIMS);
+  }
+
+  // ---------- suggestions ----------
+  function suggestionsFor(prefix, limit) {
+    prefix = prefix.toLowerCase();
+    var out = [];
+    for (var i = 0; i < words.length && out.length < limit; i++) {
+      if (words[i].indexOf(prefix) === 0) out.push(words[i]);
+    }
+    return out;
+  }
+
+  function renderSuggestions() {
+    var q = inputEl.value.trim().toLowerCase();
+    suggestionsEl.innerHTML = "";
+    if (q.length < 2) { suggestionsEl.hidden = true; return; }
+    var matches = suggestionsFor(q, 7);
+    if (!matches.length) { suggestionsEl.hidden = true; return; }
+    matches.forEach(function (w) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = w;
+      b.addEventListener("mousedown", function (e) {
+        e.preventDefault();
+        addTerm(w, 1);
+        inputEl.value = "";
+        suggestionsEl.hidden = true;
+      });
+      suggestionsEl.appendChild(b);
+    });
+    suggestionsEl.hidden = false;
+  }
+
+  // ---------- term management ----------
+  function showToast(msg) {
+    toastEl.textContent = msg;
+    if (msg) setTimeout(function () { if (toastEl.textContent === msg) toastEl.textContent = ""; }, 3200);
+  }
+
+  function addTerm(raw, sign) {
+    var word = raw.trim().toLowerCase();
+    if (!word) return;
+    if (!wordIndex.has(word)) {
+      var sugg = suggestionsFor(word, 1)[0];
+      showToast(sugg
+        ? "“" + word + "” isn't in the list — did you mean “" + sugg + "”?"
+        : "“" + word + "” isn't in our 100,000-word list. Try a simpler or more common form.");
+      return;
+    }
+    state.terms.push({ word: word, sign: sign });
+    renderChips();
+    recompute();
+  }
+
+  function removeTerm(i) { state.terms.splice(i, 1); renderChips(); recompute(); }
+  function toggleSign(i) { state.terms[i].sign *= -1; renderChips(); recompute(); }
+
+  function renderChips() {
+    chipsEl.innerHTML = "";
+    if (!state.terms.length) {
+      var e = document.createElement("span");
+      e.className = "chips-empty";
+      e.textContent = "Add words below to build an equation…";
+      chipsEl.appendChild(e);
+      return;
+    }
+    state.terms.forEach(function (t, i) {
+      var chip = document.createElement("span");
+      chip.className = "chip " + (t.sign > 0 ? "plus" : "minus");
+      var signBtn = document.createElement("span");
+      signBtn.className = "sign";
+      signBtn.title = "Click to flip sign";
+      signBtn.textContent = t.sign > 0 ? "+" : "−";
+      signBtn.addEventListener("click", function () { toggleSign(i); });
+      var label = document.createElement("span");
+      label.textContent = t.word;
+      var rm = document.createElement("button");
+      rm.className = "remove";
+      rm.type = "button";
+      rm.setAttribute("aria-label", "Remove " + t.word);
+      rm.textContent = "×";
+      rm.addEventListener("click", function () { removeTerm(i); });
+      chip.appendChild(signBtn);
+      chip.appendChild(label);
+      chip.appendChild(rm);
+      chipsEl.appendChild(chip);
+    });
+  }
+
+  // ---------- compute ----------
+  function recompute() {
+    if (!ready) return;
+    if (!state.terms.length) {
+      resultsEl.innerHTML = '<p class="results-empty">Results will appear here once your equation has at least one word.</p>';
+      vizHolder.innerHTML = '<p class="results-empty">The 2D map of your equation will appear here.</p>';
+      vizLegend.innerHTML = "";
+      return;
+    }
+
+    var query = new Float32Array(DIMS);
+    var excluded = new Set();
+    state.terms.forEach(function (t) {
+      var idx = wordIndex.get(t.word);
+      excluded.add(idx);
+      var v = getUnitVec(idx);
+      for (var d = 0; d < DIMS; d++) query[d] += t.sign * v[d];
+    });
+    var qnorm = 0;
+    for (var d2 = 0; d2 < DIMS; d2++) qnorm += query[d2] * query[d2];
+    qnorm = Math.sqrt(qnorm) || 1;
+    for (d2 = 0; d2 < DIMS; d2++) query[d2] /= qnorm;
+
+    var top = [];
+    for (var i = 0; i < VOCAB; i++) {
+      if (excluded.has(i)) continue;
+      var base = i * DIMS, score = 0;
+      for (var d = 0; d < DIMS; d++) score += query[d] * unitVectors[base + d];
+      if (top.length < 5) {
+        top.push({ idx: i, score: score });
+        if (top.length === 5) top.sort(function (a, b) { return a.score - b.score; });
+      } else if (score > top[0].score) {
+        top[0] = { idx: i, score: score };
+        top.sort(function (a, b) { return a.score - b.score; });
+      }
+    }
+    top.sort(function (a, b) { return b.score - a.score; });
+
+    renderResults(top);
+    renderViz(query, top);
+  }
+
+  function renderResults(top) {
+    resultsEl.innerHTML = "";
+    top.forEach(function (r, i) {
+      var row = document.createElement("div");
+      row.className = "result-row";
+      var rank = document.createElement("div");
+      rank.className = "result-rank";
+      rank.textContent = (i + 1) + ".";
+      var barWrap = document.createElement("div");
+      barWrap.className = "result-bar-wrap";
+      var bar = document.createElement("div");
+      bar.className = "result-bar";
+      var pct = Math.max(0, Math.min(100, r.score * 100));
+      requestAnimationFrame(function () { bar.style.width = pct + "%"; });
+      var wordSpan = document.createElement("span");
+      wordSpan.className = "result-word";
+      wordSpan.textContent = words[r.idx];
+      barWrap.appendChild(bar);
+      barWrap.appendChild(wordSpan);
+      var score = document.createElement("div");
+      score.className = "result-score";
+      score.textContent = r.score.toFixed(3);
+      row.appendChild(rank);
+      row.appendChild(barWrap);
+      row.appendChild(score);
+      resultsEl.appendChild(row);
+    });
+  }
+
+  // ---------- PCA (power iteration, 2 components) ----------
+  function pca2(points) {
+    var n = points.length, dim = points[0].length;
+    var mean = new Float64Array(dim);
+    for (var p = 0; p < n; p++) for (var d = 0; d < dim; d++) mean[d] += points[p][d] / n;
+    var X = points.map(function (row) {
+      var out = new Float64Array(dim);
+      for (var d2 = 0; d2 < dim; d2++) out[d2] = row[d2] - mean[d2];
+      return out;
+    });
+
+    function matVec(v) {
+      var out = new Float64Array(n);
+      for (var i = 0; i < n; i++) {
+        var s = 0;
+        for (var d3 = 0; d3 < dim; d3++) s += X[i][d3] * v[d3];
+        out[i] = s;
+      }
+      return out;
+    }
+    function matTVec(u) {
+      var out = new Float64Array(dim);
+      for (var i2 = 0; i2 < n; i2++) {
+        var ui = u[i2];
+        for (var d4 = 0; d4 < dim; d4++) out[d4] += X[i2][d4] * ui;
+      }
+      return out;
+    }
+    function normalize(v) {
+      var s = 0;
+      for (var i3 = 0; i3 < v.length; i3++) s += v[i3] * v[i3];
+      s = Math.sqrt(s) || 1;
+      for (i3 = 0; i3 < v.length; i3++) v[i3] /= s;
+      return v;
+    }
+    function power(deflate) {
+      var v = new Float64Array(dim);
+      for (var i4 = 0; i4 < dim; i4++) v[i4] = (i4 % 7) - 3 + 1; // fixed deterministic seed
+      normalize(v);
+      for (var iter = 0; iter < 60; iter++) {
+        var u = matVec(v);
+        var w = matTVec(u);
+        if (deflate) {
+          var dot = 0;
+          for (var k = 0; k < dim; k++) dot += w[k] * deflate[k];
+          for (k = 0; k < dim; k++) w[k] -= dot * deflate[k];
+        }
+        normalize(w);
+        v = w;
+      }
+      return v;
+    }
+    var pc1 = power(null);
+    var pc2 = power(pc1);
+    return X.map(function (row) {
+      var x = 0, y = 0;
+      for (var d5 = 0; d5 < dim; d5++) { x += row[d5] * pc1[d5]; y += row[d5] * pc2[d5]; }
+      return [x, y];
+    });
+  }
+
+  function renderViz(query, top) {
+    var points = [];
+    var meta = [];
+
+    var zero = new Array(DIMS).fill(0);
+    points.push(zero); meta.push({ role: "origin" });
+
+    var running = new Float64Array(DIMS);
+    state.terms.forEach(function (t) {
+      var v = getUnitVec(wordIndex.get(t.word));
+      for (var d = 0; d < DIMS; d++) running[d] += t.sign * v[d];
+      points.push(Array.prototype.slice.call(running));
+      meta.push({ role: "step", label: (t.sign > 0 ? "+" : "−") + t.word, sign: t.sign, isLast: false });
+    });
+    if (meta.length) meta[meta.length - 1].isLast = true;
+
+    top.forEach(function (r, i) {
+      points.push(Array.prototype.slice.call(getUnitVec(r.idx)));
+      meta.push({ role: "result", label: words[r.idx], rank: i + 1 });
+    });
+
+    var proj = pca2(points);
+
+    var maxAbs = 0.001;
+    proj.forEach(function (pt) { maxAbs = Math.max(maxAbs, Math.abs(pt[0]), Math.abs(pt[1])); });
+    maxAbs *= 1.25;
+
+    var W = 640, H = 420;
+    function sx(x) { return W / 2 + (x / maxAbs) * (W / 2 - 40); }
+    function sy(y) { return H / 2 - (y / maxAbs) * (H / 2 - 30); }
+
+    var svg = [];
+    svg.push('<svg class="viz" viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">');
+    svg.push('<line x1="0" y1="' + (H/2) + '" x2="' + W + '" y2="' + (H/2) + '" stroke="var(--line)" stroke-width="1"/>');
+    svg.push('<line x1="' + (W/2) + '" y1="0" x2="' + (W/2) + '" y2="' + H + '" stroke="var(--line)" stroke-width="1"/>');
+    svg.push('<text x="' + (W - 6) + '" y="' + (H/2 - 8) + '" text-anchor="end" font-size="10" fill="var(--ink-muted)">PC1</text>');
+    svg.push('<text x="' + (W/2 + 8) + '" y="12" font-size="10" fill="var(--ink-muted)">PC2</text>');
+
+    // dotted path through origin -> steps
+    var pathPts = [];
+    for (var i = 0; i < meta.length; i++) if (meta[i].role === "origin" || meta[i].role === "step") pathPts.push(proj[i]);
+    if (pathPts.length > 1) {
+      var d = "M " + sx(pathPts[0][0]) + " " + sy(pathPts[0][1]);
+      for (var j = 1; j < pathPts.length; j++) d += " L " + sx(pathPts[j][0]) + " " + sy(pathPts[j][1]);
+      svg.push('<path d="' + d + '" fill="none" stroke="var(--ink-muted)" stroke-width="1.5" stroke-dasharray="3,4"/>');
+    }
+
+    proj.forEach(function (pt, i) {
+      var m = meta[i];
+      var x = sx(pt[0]), y = sy(pt[1]);
+      if (m.role === "origin") {
+        svg.push('<circle cx="' + x + '" cy="' + y + '" r="4" fill="var(--ink-muted)"/>');
+        svg.push('<text x="' + x + '" y="' + (y - 9) + '" font-size="9" fill="var(--ink-muted)" text-anchor="middle">start</text>');
+      } else if (m.role === "step") {
+        var color = m.sign > 0 ? "var(--plus)" : "var(--minus)";
+        var r = m.isLast ? 7 : 5;
+        svg.push('<circle cx="' + x + '" cy="' + y + '" r="' + r + '" fill="' + color + '" ' + (m.isLast ? 'stroke="var(--ink)" stroke-width="1.5"' : '') + '/>');
+        var dy = (i % 2 === 0) ? -10 : 16;
+        svg.push('<text x="' + x + '" y="' + (y + dy) + '" font-size="10" fill="var(--ink)" text-anchor="middle" font-weight="600">' + escapeXml(m.label) + '</text>');
+      } else if (m.role === "result") {
+        var rr = 9 - (m.rank - 1) * 0.9;
+        svg.push('<circle cx="' + x + '" cy="' + y + '" r="' + rr + '" fill="var(--result)" fill-opacity="0.85"/>');
+        var ry = (i % 2 === 0) ? -11 : 16;
+        svg.push('<text x="' + x + '" y="' + (y + ry) + '" font-size="10" fill="var(--result-text)" text-anchor="middle" font-weight="600">' + escapeXml(m.label) + '</text>');
+      }
+    });
+
+    svg.push("</svg>");
+    vizHolder.innerHTML = svg.join("");
+
+    vizLegend.innerHTML =
+      '<span><span class="swatch" style="background:var(--plus)"></span>added (+)</span>' +
+      '<span><span class="swatch" style="background:var(--minus)"></span>subtracted (−)</span>' +
+      '<span><span class="swatch" style="background:var(--result)"></span>nearest match</span>';
+  }
+
+  function escapeXml(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // ---------- wire up ----------
+  document.getElementById("addPlusBtn").addEventListener("click", function () {
+    addTerm(inputEl.value, 1); inputEl.value = ""; suggestionsEl.hidden = true; inputEl.focus();
+  });
+  document.getElementById("addMinusBtn").addEventListener("click", function () {
+    addTerm(inputEl.value, -1); inputEl.value = ""; suggestionsEl.hidden = true; inputEl.focus();
+  });
+  document.getElementById("clearBtn").addEventListener("click", function () {
+    state.terms = []; renderChips(); recompute(); toastEl.textContent = "";
+  });
+  inputEl.addEventListener("keydown", function (e) {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      addTerm(inputEl.value, 1);
+      inputEl.value = "";
+      suggestionsEl.hidden = true;
+    } else if (e.key === "Escape") {
+      suggestionsEl.hidden = true;
+    }
+  });
+  inputEl.addEventListener("input", renderSuggestions);
+  document.addEventListener("click", function (e) {
+    if (!suggestionsEl.contains(e.target) && e.target !== inputEl) suggestionsEl.hidden = true;
+  });
+
+  buildPresetButtons();
+  loadAll().then(function () {
+    overlay.remove();
+  }).catch(function (err) {
+    loadLabel.textContent = "Couldn't load word vectors. Please refresh to try again.";
+    loadFill.style.background = "var(--danger)";
+    console.error(err);
+  });
+})();
+</script>
+</body>
+</html>
