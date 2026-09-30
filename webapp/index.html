@@ -1,3 +1,5 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Word Algebra</title>
 <style>
   :root {
@@ -185,16 +187,19 @@
   }
 
   /* equation builder */
-  .current-equation {
+  .equation-builder {
     margin-bottom: 2px;
-    display: flex;
-    align-items: flex-end;
-    gap: 2px;
-
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    grid-template-areas:
+      "chips clear clear"
+      "input plus  minus";
+    align-items: end;
+    gap: 8px;
   }
 
   .chips {
-    flex: 1 1 auto;
+    grid-area: chips;
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
@@ -287,15 +292,14 @@
   }
 
 
-  .input-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 2px;
+  .input-wrap {
+    grid-area: input;
     position: relative;
+    min-width: 0;
   }
 
   input[type="text"] {
-    flex: 1 1 180px;
+    width: 100%;
     min-width: 0;
     font-family: "IBM Plex Mono", ui-monospace, monospace;
     font-size: 0.95rem;
@@ -344,17 +348,18 @@
   .btn.plus {
     background: var(--plus);
     color: #fff;
+    grid-area: plus;
   }
 
   .btn.minus {
     background: var(--minus);
     color: #fff;
+    grid-area: minus;
   }
 
   .btn.clear {
     color: var(--ink);
-    flex: 0 0 auto;
-    width: 90px;
+    grid-area: clear;
   }
 
   .suggestions {
@@ -654,6 +659,35 @@
       transition: none !important;
     }
   }
+
+  @media (max-width: 640px) {
+    .equation-builder {
+      grid-template-columns: 1fr 1fr 1fr;
+      grid-template-areas:
+        "chips chips chips"
+        "input input input"
+        "plus minus clear";
+    }
+
+    .btn.square {
+      width: 100%;
+      aspect-ratio: auto;
+    }
+
+    .btn.clear {
+      width: 100%;
+    }
+
+    input[type="text"] {
+      font-size: 16px;
+    }
+
+    .suggestions {
+      position: static;
+      width: 100%;
+      margin-top: 4px;
+    }
+  }
 </style>
 
 <link rel="stylesheet"
@@ -690,15 +724,15 @@
 
     <div class="card">
       <h2>Your equation</h2>
-      <div class="current-equation">
+      <div class="equation-builder">
         <div class="chips" id="chips"><span class="chips-empty"></span></div>
-        <button class="btn clear" id="clearBtn">clear</button>
-      </div>
-      <div class="input-row">
-        <input id="wordInput" type="text" placeholder="type a word&hellip;" autocomplete="off" spellcheck="false">
+        <div class="input-wrap">
+          <input id="wordInput" type="text" placeholder="type a word&hellip;" autocomplete="off" spellcheck="false">
+          <div class="suggestions" id="suggestions" hidden></div>
+        </div>
         <button class="btn square plus" id="addPlusBtn">+</button>
         <button class="btn square minus" id="addMinusBtn">&minus;</button>
-        <div class="suggestions" id="suggestions" hidden></div>
+        <button class="btn clear" id="clearBtn">clear</button>
       </div>
       <p class="toast" id="toast"></p>
     </div>
@@ -728,30 +762,30 @@
     <div class="compare-row">
       <div class="card compare-side">
         <h3>Relationship A</h3>
-        <div class="current-equation">
+        <div class="equation-builder">
           <div class="chips" id="chipsA"><span class="chips-empty"></span></div>
-          <button class="btn clear" id="clearBtnA">clear</button>
-        </div>
-        <div class="input-row">
-          <input id="wordInputA" type="text" placeholder="type a word&hellip;" autocomplete="off" spellcheck="false">
+          <div class="input-wrap">
+            <input id="wordInputA" type="text" placeholder="type a word&hellip;" autocomplete="off" spellcheck="false">
+            <div class="suggestions" id="suggestionsA" hidden></div>
+          </div>
           <button class="btn square plus" id="addPlusBtnA">+</button>
           <button class="btn square minus" id="addMinusBtnA">&minus;</button>
-          <div class="suggestions" id="suggestionsA" hidden></div>
+          <button class="btn clear" id="clearBtnA">clear</button>
         </div>
         <p class="toast" id="toastA"></p>
       </div>
 
       <div class="card compare-side">
         <h3>Relationship B</h3>
-        <div class="current-equation">
+        <div class="equation-builder">
           <div class="chips" id="chipsB"><span class="chips-empty"></span></div>
-          <button class="btn clear" id="clearBtnB">clear</button>
-        </div>
-        <div class="input-row">
-          <input id="wordInputB" type="text" placeholder="type a word&hellip;" autocomplete="off" spellcheck="false">
+          <div class="input-wrap">
+            <input id="wordInputB" type="text" placeholder="type a word&hellip;" autocomplete="off" spellcheck="false">
+            <div class="suggestions" id="suggestionsB" hidden></div>
+          </div>
           <button class="btn square plus" id="addPlusBtnB">+</button>
           <button class="btn square minus" id="addMinusBtnB">&minus;</button>
-          <div class="suggestions" id="suggestionsB" hidden></div>
+          <button class="btn clear" id="clearBtnB">clear</button>
         </div>
         <p class="toast" id="toastB"></p>
       </div>
